@@ -82,3 +82,10 @@ $theme: mat.define-light-theme($primary, $accent);
 
 // Include all theme styles for the components.
 @include mat.all-component-themes($theme);
+
+.custom-dialog-container {
+  .mat-dialog-actions {
+    gap: 15px;
+    justify-content: center;
+  } 
+}
