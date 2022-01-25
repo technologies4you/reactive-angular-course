@@ -1,13 +1,14 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from "@angular/material/dialog";
 import { Course } from "../model/course";
 import { FormBuilder, Validators, FormGroup } from "@angular/forms";
 import * as moment from 'moment';
 import { catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { Subscription, throwError } from 'rxjs';
 import { CoursesService } from '../services/courses.service';
 import { LoadingService } from '../loading/loading.service';
 import { MessagesService } from '../messages/messages.service';
+import { CoursesStore } from '../services/courses.store';
 
 @Component({
   selector: 'course-dialog',
@@ -18,19 +19,18 @@ import { MessagesService } from '../messages/messages.service';
     MessagesService
   ]
 })
-export class CourseDialogComponent {
+export class CourseDialogComponent implements OnDestroy {
 
   form: FormGroup;
 
   course: Course;
+  subscription: Subscription;
 
   constructor(
     private fb: FormBuilder,
     private dialogRef: MatDialogRef<CourseDialogComponent>,
     @Inject(MAT_DIALOG_DATA) course: Course,
-    private coursesService: CoursesService,
-    private loadingService: LoadingService,
-    private messagingService: MessagesService
+    private coursesStore: CoursesStore
   ) {
 
     this.course = course;
@@ -47,25 +47,16 @@ export class CourseDialogComponent {
   save() {
     const changes = this.form.value;
 
-    const saveCourse$ = this.coursesService.saveCourse(this.course.id, changes)
-      .pipe(
-        catchError((err) => {
-          const message = 'Could not save course';
-          this.messagingService.showErrors(message);
-          return throwError(err);
-        })
-      );
-
-    this.loadingService.showLoaderUntilCompleted(saveCourse$)
-      .subscribe(
-        (val) => {
-          this.dialogRef.close(val);
-        }
-      );
+    this.subscription = this.coursesStore.saveCourse(this.course.id, changes).subscribe();
+    this.dialogRef.close(changes);
   }
 
   close() {
     this.dialogRef.close();
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
 }

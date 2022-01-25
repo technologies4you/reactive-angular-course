@@ -1,13 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { Course, sortCoursesBySeqNo } from '../model/course';
-import { interval, noop, Observable, of, throwError, timer } from 'rxjs';
-import { catchError, delay, delayWhen, filter, finalize, map, retryWhen, shareReplay, tap } from 'rxjs/operators';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { CourseDialogComponent } from '../course-dialog/course-dialog.component';
-import { CoursesService } from '../services/courses.service';
+import { Course } from '../model/course';
+import { Observable } from 'rxjs';
 import { Constants } from '../shared/constants';
-import { LoadingService } from '../loading/loading.service';
-import { MessagesService } from '../messages/messages.service';
+import { CoursesStore } from '../services/courses.store';
 
 @Component({
   selector: 'home',
@@ -20,9 +15,7 @@ export class HomeComponent implements OnInit {
   advancedCourses$: Observable<Course[]>;
 
   constructor(
-    private coursesService: CoursesService,
-    private loadingService: LoadingService,
-    private messagesService: MessagesService
+    private coursesStore: CoursesStore
   ) { }
 
   ngOnInit() {
@@ -30,26 +23,8 @@ export class HomeComponent implements OnInit {
   }
 
   reloadCourses() {
-    const courses$ = this.coursesService.loadAllCourses().pipe(
-      map((courses) => courses.sort(sortCoursesBySeqNo)),
-      catchError((err) => {
-        const message = 'Could not load courses';
-        this.messagesService.showErrors(message);
-        console.log(message, err);
-        return throwError(err);
-      })
-      // shareReplay()
-    );
-
-    const loadCourses$ = this.loadingService.showLoaderUntilCompleted(courses$);
-
-    this.beginnerCourses$ = loadCourses$.pipe(
-      map((courses) => courses.filter((course) => course.category.toLowerCase() == Constants.BEGINNER))
-    );
-
-    this.advancedCourses$ = loadCourses$.pipe(
-      map((courses) => courses.filter((course) => course.category.toLowerCase() == Constants.ADVANCED))
-    );
+    this.beginnerCourses$ = this.coursesStore.filterByCategory(Constants.BEGINNER);
+    this.advancedCourses$ = this.coursesStore.filterByCategory(Constants.ADVANCED);
   }
 
 }

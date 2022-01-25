@@ -1,4 +1,4 @@
 export class Constants {
-  static readonly BEGINNER = 'beginner';
-  static readonly ADVANCED = 'advanced';
+  static readonly BEGINNER = 'BEGINNER';
+  static readonly ADVANCED = 'ADVANCED';
 }
